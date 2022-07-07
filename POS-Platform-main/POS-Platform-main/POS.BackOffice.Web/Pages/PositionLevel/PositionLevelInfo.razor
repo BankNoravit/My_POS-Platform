@@ -1,0 +1,183 @@
+﻿@page "/positionLevel/info/{Mode}"
+@page "/positionLevel/info/{Mode}/{ID}"
+
+@inject IBaseService BaseService
+@inject IJSRuntime JS
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using POS.Domain.Models
+
+<AlertDialog @ref="Alert"
+             OnCloseCallback="@ClosedAlertCallback"></AlertDialog>
+<InfoPage @ref="Page"
+          TemplatePageConfig="templatePageConfig"
+          TriggerSubmitFormCallback="@TriggerSubmitFormCallback"
+          OnEnableInputCallback="@EnableInputCallback"
+          OnDisabledInputCallback="@DisabledInputCallback"
+          OnSetActiveCallback="@SetActiveCallback">
+    <ChildContent>
+        <EditForm Model="positionLevel" OnValidSubmit="@OnValidSubmitCallback">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ระดับตำแหน่ง *</label>
+                        <SfTextBox @bind-Value="@positionLevel.POSITION_LEVEL_CODE" CssClass="form-control" Placeholder="ระดับตำแหน่ง" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => positionLevel.POSITION_LEVEL_CODE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ชื่อระดับตำแหน่ง *</label>
+                        <SfTextBox @bind-Value="@positionLevel.POSITION_LEVEL_NAME_THA" CssClass="form-control" Placeholder="ชื่อระดับตำแหน่ง" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => positionLevel.POSITION_LEVEL_NAME_THA)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อระดับตำแหน่ง (Eng)</label>
+                        <SfTextBox @bind-Value="@positionLevel.POSITION_LEVEL_NAME_ENG" CssClass="form-control" Placeholder="ชื่อระดับตำแหน่ง (อังกฤษ)" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => positionLevel.POSITION_LEVEL_NAME_ENG)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">เลขประจำตำแหน่ง</label>
+                        <SfNumericTextBox @bind-Value="@positionLevel.POSITION_LEVEL" CssClass="form-control" Placeholder="เลขประจำตำแหน่ง" Enabled="@(!isDisabled)"></SfNumericTextBox>
+                        <ValidationMessage For="@(() => positionLevel.POSITION_LEVEL)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">หมายเหตุ</label>
+                    <SfTextBox @bind-Value="@positionLevel.COMMENTS" CssClass="form-control" Placeholder="หมายเหตุ" Multiline="true" Enabled="@(!isDisabled)"></SfTextBox>
+                    <ValidationMessage For="@(() => positionLevel.COMMENTS)"></ValidationMessage>
+                </div>
+            </div>
+            <SfButton id="@btnSubmitID" CssClass="d-none"></SfButton>
+        </EditForm>
+    </ChildContent>
+</InfoPage>
+@code {
+    [Parameter] public string Mode { get; set; }
+    [Parameter] public string? ID { get; set; }
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private ORG_POSITION_LEVEL positionLevel { get; set; } = new ORG_POSITION_LEVEL(); //{ ORG_POSITION_LEVEL_LEVEL = new ORG_POSITION_LEVEL_LEVEL() };
+    private bool isDisabled { get; set; }
+    private string headerText { get; set; }
+    private string btnSubmitID { get; set; }
+    private bool saveSuccess { get; set; }
+
+    InfoPage Page;
+
+    AlertDialog Alert;
+    protected void ClosedAlertCallback()
+    {
+        if (Mode == BaseService.ModeCreate() && saveSuccess == true)
+        {
+            Mode = BaseService.ModeUpdate();
+            ID = positionLevel.POSITION_LEVEL_ID.ToString();
+            templatePageConfig.Mode = Mode;
+            templatePageConfig.HeaderText = string.Format("{0} : {1}", positionLevel.POSITION_LEVEL_CODE, positionLevel.POSITION_LEVEL_NAME_THA);
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        else if (saveSuccess == true)
+        {
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        saveSuccess = false;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.InitData();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {                    
+                    { "ข้อมูลระดับตำแหน่ง", "/positionLevel" },
+                    { "รายละเอียด", "/positionLevel/info" },
+                },
+                PageTitle = "Position Level - BackOffice",
+                PageName = "ข้อมูลระดับตำแหน่ง",
+                ListPageRoute = "/positionLevel",
+                Mode = Mode,
+                HeaderText = headerText,
+                IsActive = positionLevel.IS_ACTIVE
+            };
+        btnSubmitID = "btnSubmit";
+    }
+
+    protected void InitData()
+    {
+        var context = BaseService.GetODataContext();
+        if (!string.IsNullOrEmpty(ID) && Mode == BaseService.ModeUpdate())
+        {
+            positionLevel = context.PositionLevel.Where(f => f.POSITION_LEVEL_ID == new Guid(ID) && f.IS_DELETE == false).First();
+            headerText = string.Format("{0} : {1}", positionLevel.POSITION_LEVEL_CODE, positionLevel.POSITION_LEVEL_NAME_THA);
+            isDisabled = true;
+        }
+        else
+        {
+            headerText = "เพิ่มข้อมูลระดับตำแหน่ง";
+            isDisabled = false;
+        }
+    }
+
+    protected async Task OnValidSubmitCallback()
+    {
+        positionLevel.IS_ACTIVE = Page.IsActive;
+
+        var context = BaseService.GetODataContext();
+        if (Mode == BaseService.ModeUpdate())
+        {
+            context.UpdatePositionLevel(positionLevel);
+        }
+        else
+        {
+            context.AddToPositionLevel(positionLevel);
+        }
+
+        var res = await context.SaveChangesAsync();
+        positionLevel = BaseService.GetEntityResponse<ORG_POSITION_LEVEL>(res);
+        saveSuccess = true;
+        Alert.Show(saveSuccess, "บันทึกข้อมูลสำเร็จ");
+    }        
+    
+
+    protected async Task TriggerSubmitFormCallback()
+    {
+        await JS.InvokeVoidAsync("button.TriggerClick", btnSubmitID);
+    }
+
+    protected void EnableInputCallback()
+    {
+        isDisabled = false;
+    }
+
+    protected void DisabledInputCallback()
+    {
+        isDisabled = true;
+    }
+
+    protected async Task SetActiveCallback(bool active)
+    {   // call context
+        positionLevel.IS_ACTIVE = active;
+        if (Mode == BaseService.ModeUpdate())
+        {
+            var context = BaseService.GetODataContext();
+            context.UpdatePositionLevel(positionLevel);
+            await context.SaveChangesAsync();
+        }
+    }
+}

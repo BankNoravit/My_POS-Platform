@@ -1,0 +1,35 @@
+﻿@namespace POS.BackOffice.Web.Pages.Components
+
+@using Syncfusion.Blazor.Popups
+
+<SfDialog @ref="Dialog" Width="400px" Visible="false" ShowCloseIcon="true" IsModal="true">
+    <DialogEvents Closed="OnCloseCallback"></DialogEvents>
+    <DialogTemplates>
+        <Header>@HeaderText</Header>
+        <Content>@ContentText</Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton OnClick="@OnConfirmCallback" Content="ยืนยัน" IsPrimary="true"></DialogButton>
+        <DialogButton OnClick="@Hide" Content="ยกเลิก"></DialogButton>
+    </DialogButtons>
+</SfDialog>
+@code
+{
+    [Parameter] public EventCallback OnCloseCallback { get; set; }
+    [Parameter] public EventCallback OnConfirmCallback { get; set; }
+
+    [Parameter] public string HeaderText { get; set; }
+    [Parameter] public string ContentText { get; set; }
+
+    SfDialog Dialog;
+
+    public void Show()
+    {
+        Dialog.Show();
+    }
+
+    public void Hide()
+    {
+        Dialog.Hide();
+    }
+}

@@ -1,0 +1,69 @@
+﻿@namespace POS.BackOffice.Web.Pages.Components
+
+@using Syncfusion.Blazor.Popups
+
+<SfDialog @ref="Dialog" Width="400px" Visible="false" ShowCloseIcon="true" IsModal="true" CssClass="custom-alert-dialog">
+    <DialogEvents Closed="@OnCloseCallback"></DialogEvents>
+    <DialogTemplates>
+        <Header>@headerText</Header>
+        <Content>@contentText</Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton OnClick="@Hide" Content="ปิด" IsPrimary="true" />
+    </DialogButtons>
+</SfDialog>
+@if (isSuccess)
+{
+    <style>
+        .custom-alert-dialog.e-dlg-modal .e-btn.e-primary {
+            background-color: #7367f0 !important;
+            border-color: #7367f0 !important;
+            color: #fff !important;
+        }
+    </style>
+}
+else
+{
+    <style>
+        .custom-alert-dialog.e-dlg-modal .e-btn.e-primary {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #fff !important;
+        }
+    </style>
+}
+@code
+{
+    [Parameter] public EventCallback OnCloseCallback { get; set; }
+
+    private string contentText { get; set; }
+    private bool isSuccess { get; set; }
+    private string headerText { get; set; }
+    SfDialog Dialog;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    public void Show(bool success, string msg)
+    {
+        contentText = msg;
+        isSuccess = success;
+        if (isSuccess)
+        {
+            headerText = "สำเร็จ";
+        }
+        else
+        {
+            headerText = "พบข้อผิดพลาด";
+        }
+
+        Dialog.Show();
+    }
+
+    public void Hide()
+    {
+        Dialog.Hide();
+    }
+}

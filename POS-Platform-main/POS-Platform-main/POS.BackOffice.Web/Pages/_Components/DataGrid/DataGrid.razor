@@ -1,0 +1,265 @@
+﻿@namespace POS.BackOffice.Web.Pages.Components
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Buttons
+
+@typeparam TValue
+
+<SfGrid ID="@DataGridConfig.GridID" @ref="grid" TValue="TValue" Query="@Query" AllowExcelExport="@DataGridConfig.AllowExcelExport"
+        AllowPaging="@DataGridConfig.AllowPaging" AllowSorting="@DataGridConfig.AllowSorting" AllowReordering="@DataGridConfig.AllowReordering"
+        AllowResizing="@DataGridConfig.AllowResizing" AllowFiltering="@DataGridConfig.AllowFiltering" AllowGrouping="@DataGridConfig.AllowGrouping"
+        PrintMode=PrintMode.CurrentPage
+        ShowColumnChooser="@DataGridConfig.ShowColumnChooser">
+    <SfDataManager @ref="dm" Url="@BaseService.GetOdataRequestUrl(pRouteName: DataGridConfig.ODataRouteName)" Adaptor="Adaptors.ODataV4Adaptor"></SfDataManager>
+    @if (DataGridConfig.AllowGridEditing)
+    {
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+    }
+    <GridEvents OnActionBegin="ActionBegin" OnActionComplete="ActionComplete" RowSelected="Selected" RowDeselected=DeSelected TValue="TValue"></GridEvents>
+    <SfToolbar>
+        <ToolbarItems>
+            <ToolbarItem Type="ItemType.Input" Align="Syncfusion.Blazor.Navigations.ItemAlign.Left">
+                <Template>
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-text" id="basic-addon-search2">
+                            <span class="e-icons e-search"></span>
+                        </span>
+                        <input type="text" class="form-control sftextbox-search" placeholder="ค้นหา..." aria-label="ค้นหา..." aria-describedby="basic-addon-search2"
+                               @bind="searchText" @onblur="@OnBlurSearchHandler" @onkeydown="@OnEnterSearchHandler" />
+                    </div>
+                </Template>
+            </ToolbarItem>
+            <ToolbarItem SuffixIcon="e-columnchooser-btn" Text="แสดงคอลัมน์" CssClass="e-cc e-ccdiv e-cc-toolbar" OnClick="@OnOpenColumnChooser" Align="ItemAlign.Right">
+            </ToolbarItem>
+        </ToolbarItems>
+    </SfToolbar>
+    <GridColumnChooserSettings>
+        <Template>
+            @{
+                var ContextData = context as ColumnChooserTemplateContext;
+            }
+            @if (ContextData != null && ContextData.Columns != null)
+            {
+                @foreach (var column in ContextData.Columns)
+                {
+                    <GridColumnChooserItem Column="column"></GridColumnChooserItem>
+                }
+            }
+        </Template>
+        <FooterTemplate>
+            @{
+                var ContextFooterData = context as ColumnChooserFooterTemplateContext;
+                var visibles = ContextFooterData.Columns.Where(x => x.Visible).Select(x => x.HeaderText).ToArray();
+                var hiddens = ContextFooterData.Columns.Where(x => !x.Visible).Select(x => x.HeaderText).ToArray();
+            }
+            <SfButton IsPrimary="true" OnClick="@(async () => {
+            await grid.ShowColumnsAsync(visibles);
+            await grid.HideColumnsAsync(hiddens); })">
+                ยืนยัน
+            </SfButton>
+            <SfButton @onclick="@(async () => await ContextFooterData.CancelAsync())">ยกเลิก</SfButton>
+        </FooterTemplate>
+    </GridColumnChooserSettings>
+    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
+    <GridColumns>
+        @foreach (var col in DataGridColumns.OrderBy(o => o.Seq))
+        {
+            switch (col.Template)
+            {
+                case ColumnTemplate.None:
+                    <GridColumn Field="@col.Field" HeaderText="@col.HeaderText" AllowSearching="@col.AllowSearching" AllowEditing="@col.AllowEditing" Format="@col.Format" Type="@col.Type" EditType="@col.EditType" EditTemplate="@col.EditTemplate" IsPrimaryKey="@col.IsPrimaryKey" TextAlign="@col.TextAlign" Width="@col.Width" Visible="@col.Visible" ShowInColumnChooser="@col.ShowInColumnChooser"></GridColumn>
+                    break;
+                case ColumnTemplate.StatusBoolean:
+                    <GridColumn Field="@col.Field" HeaderText="@col.HeaderText" AllowSearching="@col.AllowSearching" AllowEditing="@col.AllowEditing" Format="@col.Format" Type="@col.Type" EditType="@col.EditType" EditTemplate="@col.EditTemplate" IsPrimaryKey="@col.IsPrimaryKey" TextAlign="@col.TextAlign" Width="@col.Width" Visible="@col.Visible" ShowInColumnChooser="@col.ShowInColumnChooser">
+                        <Template>
+                            @{
+                                var data = context.GetType().GetProperty(col.Field)?.GetValue(context, null);
+                                if (data != null && (bool)data)
+                                {
+                                    <span class="badge text-capitalize badge-light-success badge-pill"> Active </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-capitalize badge-light-danger badge-pill"> Inactive </span>
+                                }
+                            }
+                        </Template>
+                    </GridColumn>
+                    break;
+            }
+        }
+    </GridColumns>
+</SfGrid>
+<style>
+    /*    .sf-grid.e-grid .e-dialog .e-dlg-content {
+            margin: 0;
+        }
+    */
+    /*        .sf-grid.e-grid .e-dialog .e-dlg-content .e-cc-searchdiv {
+                display: none;
+            }*/
+
+    .sf-grid.e-grid .e-dialog .e-dlg-header-content .e-dlg-header {
+        visibility: hidden;
+        position: relative;
+    }
+
+        .sf-grid.e-grid .e-dialog .e-dlg-header-content .e-dlg-header:after {
+            visibility: visible;
+            position: absolute;
+            content: 'คอลัมน์';
+            top: 0;
+            left: 0;
+        }
+
+    .sf-grid.e-grid td.e-active {
+        background: #edebff;
+    }
+</style>
+@code
+{
+    [Parameter] public DataGridConfig DataGridConfig { get; set; }
+    [Parameter] public List<DataGridColumn> DataGridColumns { get; set; }
+    [Parameter] public Query Query { get; set; } 
+
+    [Parameter] public EventCallback<string> OnSelectedRowCallback { get; set; }
+    [Parameter] public EventCallback OnDeselectedRowCallback { get; set; }
+
+    private SfGrid<TValue> grid;
+    private SfDataManager dm { get; set; }
+    private string searchText { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (Query == null)
+            Query = new Query();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        var adaptor = (dm.DataAdaptor as ODataV4Adaptor);
+        RemoteOptions rmOpt = adaptor.Options;
+        rmOpt.EnableODataSearchFallback = true;
+        adaptor.Options = rmOpt;
+    }
+
+    public async Task Selected(RowSelectEventArgs<TValue> args)
+    {
+        var primaryKeyColumn = grid.Columns.FirstOrDefault(f => f.IsPrimaryKey == true);
+        if (primaryKeyColumn != null)
+        {
+            var data = args.Data.GetType().GetProperty(primaryKeyColumn.Field)?.GetValue(args.Data, null);
+            if (data != null)
+            {
+                await OnSelectedRowCallback.InvokeAsync(data.ToString());
+            }
+            else
+            {
+                await Task.FromResult(0);
+            }
+        }
+        else
+        {
+            await Task.FromResult(0);
+        }
+    }
+    public async void DeSelected(RowDeselectEventArgs<TValue> args)
+    {
+        await OnDeselectedRowCallback.InvokeAsync();
+    }
+
+    public async Task OnOpenColumnChooser(ClickEventArgs args)
+    {
+        await grid.OpenColumnChooserAsync();
+    }
+
+    private void OnBlurSearchHandler()
+    {
+        this.grid.Search(searchText);
+    }
+
+    public void OnEnterSearchHandler(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            this.grid.Search(searchText);
+        }
+    }
+
+    public async Task ExportExcel()
+    {
+        if (grid.CurrentViewData != null)
+        {
+            ExcelExportProperties exportProperties = new ExcelExportProperties();
+            exportProperties.IncludeTemplateColumn = true;
+            await grid.ExcelExport(exportProperties);
+        }
+        else
+        {
+            await Task.FromResult(0);
+        }
+    }
+
+    public async Task Print()
+    {
+        await this.grid.Print();
+    }
+
+    public async Task Refresh()
+    {
+        await this.grid.Refresh();
+    }
+
+    public void ActionBegin(ActionEventArgs<TValue> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            // Triggers before editing operation starts
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            // Triggers before add operation starts
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Cancel)
+        {
+            // Triggers before cancel operation starts
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            // Triggers before save operation starts
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            // Triggers before delete operation starts
+        }
+    }
+
+    public void ActionComplete(ActionEventArgs<TValue> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            // Triggers once editing operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            // Triggers once add operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Cancel)
+        {
+            // Triggers once cancel operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            // Triggers once save operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            // Triggers once delete operation completes
+        }
+    }
+}

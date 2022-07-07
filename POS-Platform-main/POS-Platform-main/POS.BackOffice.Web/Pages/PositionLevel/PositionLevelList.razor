@@ -1,0 +1,98 @@
+﻿@page "/positionlevel"
+
+@inject IBaseService BaseService
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using POS.Domain.Models
+
+<ListPage @ref="listPage"
+          TValue="ORG_POSITION_LEVEL"
+          TemplatePageConfig="templatePageConfig"
+          DataGridQuery="@dataGridQuery"
+          DataGridConfig="dataGridConfig"
+          DataGridColumns="dataGridColumns"
+          DataFilterColumns="dataFilterColumns"
+          OnDeleteDataCallback="@DeleteDataCallback"
+          OnUpdateFilterRuleCallback="@UpdateFilterRuleCallback">
+</ListPage>
+
+@code {
+    private ListPage<ORG_POSITION_LEVEL> listPage { get; set; }
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private Query dataGridQuery { get; set; }
+    private DataGridConfig dataGridConfig { get; set; }
+    private List<DataGridColumn> dataGridColumns { get; set; }
+    private List<DataFilterColumn> dataFilterColumns { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {
+                    { "องค์กร", "/company" },
+                    { "ข้อมูลระดับตำแหน่ง", "/" }
+                },
+                PageTitle = "PositionLevel - BackOffice",
+                PageName = "ข้อมูลระดับตำแหน่ง",
+                InfoPageRoute = "/positionLevel/info"
+            };
+
+        dataGridQuery = new Query().Where(nameof(ORG_POSITION_LEVEL.IS_DELETE), QUERY_OPERATORS.EQUAL.ToString().ToLower(), false).Expand(new List<string> { nameof(ORG_POSITION_LEVEL.CREATED_BY), nameof(ORG_POSITION_LEVEL.LAST_UPDATED_BY) });
+        dataGridConfig = new DataGridConfig()
+            {
+                GridID = Guid.NewGuid().ToString(),
+                ODataRouteName = ODATA_ROUTE_NAME.PositionLevel
+            };
+        dataGridColumns = new List<DataGridColumn>(){
+            new DataGridColumn(){ Seq=1, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_ID), HeaderText="ไอดี", AllowSearching=false, TextAlign=TextAlign.Left, Width="100", IsPrimaryKey=true, Visible=false, ShowInColumnChooser=false },
+            new DataGridColumn(){ Seq=2, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_CODE), HeaderText="ระดับตำแหน่ง", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=3, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_THA), HeaderText="ชื่อระดับตำแหน่ง", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=4, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_ENG), HeaderText="ชื่อระดับตำแหน่ง (Eng)", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=5, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL), HeaderText="เลขระดับตำแหน่ง", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=6, Field=nameof(ORG_POSITION_LEVEL.COMMENTS), HeaderText="หมายเหตุ", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=7, Field=nameof(ORG_POSITION_LEVEL.CREATED_BY) + "." + nameof(SYS_USER.FULLNAME), HeaderText="ผู้สร้าง", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=8, Field=nameof(ORG_POSITION_LEVEL.CREATION_DATE), HeaderText="วันที่สร้าง", AllowSearching=true, TextAlign=TextAlign.Left, Width="150", Format="dd/MM/yyyy HH:mm", Type= Syncfusion.Blazor.Grids.ColumnType.Date, },
+            new DataGridColumn(){ Seq=9, Field=nameof(ORG_POSITION_LEVEL.LAST_UPDATED_BY) + "." + nameof(SYS_USER.FULLNAME), HeaderText="ผู้แก้ไข", AllowSearching=true, TextAlign=TextAlign.Left, Width="150" },
+            new DataGridColumn(){ Seq=10, Field=nameof(ORG_POSITION_LEVEL.LAST_UPDATE_DATE), HeaderText="วันที่แก้ไข", AllowSearching=true, TextAlign=TextAlign.Left, Width="150", Format="dd/MM/yyyy HH:mm", Type=Syncfusion.Blazor.Grids.ColumnType.Date, },
+            new DataGridColumn(){ Seq=11, Field=nameof(ORG_POSITION_LEVEL.IS_ACTIVE), HeaderText="สถานะ", AllowSearching=true, TextAlign=TextAlign.Left, Width="150", Template=ColumnTemplate.StatusBoolean }
+        };
+        dataFilterColumns = new List<DataFilterColumn>(){
+            new DataFilterColumn(){ Seq=1, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_CODE), Label="ระดับตำแหน่ง", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=2, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_THA), Label="ชื่อระดับตำแหน่ง", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=3, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_ENG), Label="ชื่อระดับตำแหน่ง (Eng)", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=4, Field=nameof(ORG_POSITION_LEVEL.POSITION_LEVEL), Label="เลขระดับตำแหน่ง", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=5, Field=nameof(ORG_POSITION_LEVEL.CREATED_BY) + "." + nameof(SYS_USER.FULLNAME), Label="ผู้สร้าง", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=6, Field=nameof(ORG_POSITION_LEVEL.CREATION_DATE), Label="วันที่สร้าง", Format="dd/MM/yyyy", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.Date },
+            new DataFilterColumn(){ Seq=7, Field=nameof(ORG_POSITION_LEVEL.LAST_UPDATED_BY) + "." + nameof(SYS_USER.FULLNAME), Label="ผู้แก้ไข", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.String },
+            new DataFilterColumn(){ Seq=8, Field=nameof(ORG_POSITION_LEVEL.LAST_UPDATE_DATE), Label="วันที่แก้ไข", Format="dd/MM/yyyy", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.Date },
+            new DataFilterColumn(){ Seq=9, Field=nameof(ORG_POSITION_LEVEL.IS_ACTIVE), Label="สถานะ", Type=Syncfusion.Blazor.QueryBuilder.ColumnType.Boolean },
+        };
+    }
+
+    protected async Task DeleteDataCallback(string pkData)
+    {
+        var context = BaseService.GetODataContext();
+        var positionlevel = context.PositionLevel.Where(f => f.POSITION_LEVEL_ID == new Guid(pkData) && f.IS_DELETE == false).First();
+        context.DeletePositionLevel(positionlevel);
+        context.SaveChanges();
+        await listPage.GridRefresh();
+    }
+
+    private void UpdateFilterRuleCallback(WhereFilter predicate)
+    {
+        if (predicate == null)
+        {
+            predicate = new WhereFilter() { Field = nameof(ORG_POSITION_LEVEL.IS_DELETE), Operator = QUERY_OPERATORS.EQUAL.ToString().ToLower(), value = false };
+        }
+        else
+        {
+            predicate = predicate.And(nameof(ORG_POSITION_LEVEL.IS_DELETE), QUERY_OPERATORS.EQUAL.ToString().ToLower(), false);
+        }
+        dataGridQuery = new Query().Where(predicate).Expand(new List<string> { nameof(ORG_POSITION_LEVEL.CREATED_BY), nameof(ORG_POSITION_LEVEL.LAST_UPDATED_BY) });
+    }
+}
