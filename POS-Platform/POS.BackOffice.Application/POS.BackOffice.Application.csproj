@@ -32,7 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="v1\Branch\Profile\" />
     <Folder Include="v1\Flex_Item\Command\" />
     <Folder Include="v1\Flex_Item\ViewModels\" />
     <Folder Include="v1\Flex_Item\Profile\" />
