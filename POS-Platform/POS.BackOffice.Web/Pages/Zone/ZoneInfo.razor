@@ -1,1 +1,175 @@
-﻿
+﻿@page "/zone/info/{Mode}"
+@page "/zone/info/{Mode}/{ID}"
+
+@inject IBaseService BaseService
+@inject IJSRuntime JS
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using POS.Domain.Models
+
+<AlertDialog @ref="Alert"
+             OnCloseCallback="@ClosedAlertCallback"></AlertDialog>
+<InfoPage @ref="Page"
+          TemplatePageConfig="templatePageConfig"
+          TriggerSubmitFormCallback="@TriggerSubmitFormCallback"
+          OnEnableInputCallback="@EnableInputCallback"
+          OnDisabledInputCallback="@DisabledInputCallback"
+          OnSetActiveCallback="@SetActiveCallback">
+    <ChildContent>
+        <EditForm Model="zone" OnValidSubmit="@OnValidSubmitCallback">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">รหัสโซน *</label>
+                        <SfTextBox @bind-Value="@zone.ZONE_CODE" CssClass="form-control" Placeholder="รหัสโซน" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => zone.ZONE_CODE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ชื่อโซน *</label>
+                        <SfTextBox @bind-Value="@zone.ZONE_NAME_THA" CssClass="form-control" Placeholder="ชื่อโซน" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => zone.ZONE_NAME_THA)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อโซน (Eng)</label>
+                        <SfTextBox @bind-Value="@zone.ZONE_NAME_ENG" CssClass="form-control" Placeholder="ชื่อโซน (Eng)" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => zone.ZONE_NAME_ENG)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">หมายเหตุ</label>
+                    <SfTextBox @bind-Value="@zone.COMMENTS" CssClass="form-control" Placeholder="หมายเหตุ" Multiline="true" Enabled="@(!isDisabled)"></SfTextBox>
+                    <ValidationMessage For="@(() => zone.COMMENTS)"></ValidationMessage>
+                </div>
+            </div>
+            <SfButton id="@btnSubmitID" CssClass="d-none"></SfButton>
+        </EditForm>
+    </ChildContent>
+</InfoPage>
+@code {
+    [Parameter] public string Mode { get; set; }
+    [Parameter] public string? ID { get; set; }
+
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private ORG_ZONE zone { get; set; } = new ORG_ZONE();
+    private bool isDisabled { get; set; }
+    private string headerText { get; set; }
+    private string btnSubmitID { get; set; }
+    private bool saveSuccess { get; set; }
+
+    InfoPage Page;
+
+    AlertDialog Alert;
+    protected void ClosedAlertCallback()
+    {
+        if (Mode == BaseService.ModeCreate() && saveSuccess == true)
+        {
+            Mode = BaseService.ModeUpdate();
+            ID = zone.ZONE_ID.ToString();
+            templatePageConfig.Mode = Mode;
+            templatePageConfig.HeaderText = string.Format("{0} : {1}", zone.ZONE_CODE, zone.ZONE_NAME_THA);
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        else if (saveSuccess == true)
+        {
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        saveSuccess = false;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.InitData();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {
+                    { "องค์กร", "/company" },
+                    { "ข้อมูลโซน", "/zone" },
+                    { "รายละเอียด", "/zone/info" },
+                },
+                PageTitle = "Zone - BackOffice",
+                PageName = "ข้อมูลโซน",
+                ListPageRoute = "/zone",
+                Mode = Mode,
+                HeaderText = headerText,
+                IsActive = zone.IS_ACTIVE
+            };
+        btnSubmitID = "btnSubmit";
+    }
+
+    protected void InitData()
+    {
+        var context = BaseService.GetODataContext();
+        if (!string.IsNullOrEmpty(ID) && Mode == BaseService.ModeUpdate())
+        {
+            zone = context.Zone.Where(f => f.ZONE_ID == new Guid(ID) && f.IS_DELETE == false).First();
+            headerText = string.Format("{0} : {1}", zone.ZONE_CODE, zone.ZONE_NAME_THA);
+            isDisabled = true;
+        }
+        else
+        {
+            headerText = "เพิ่มข้อมูลโซน";
+            isDisabled = false;
+        }
+    }
+
+    protected async Task OnValidSubmitCallback()
+    {
+        zone.IS_ACTIVE = Page.IsActive;
+
+        var context = BaseService.GetODataContext();
+        if (Mode == BaseService.ModeUpdate())
+        {
+            context.UpdateZone(zone);
+        }
+        else
+        {
+            context.AddToZone(zone);
+        }
+        var res = await context.SaveChangesAsync();
+        zone = BaseService.GetEntityResponse<ORG_ZONE>(res);
+        saveSuccess = true;
+        Alert.Show(saveSuccess, "บันทึกข้อมูลสำเร็จ");
+    }
+
+    protected async Task TriggerSubmitFormCallback()
+    {
+        await JS.InvokeVoidAsync("button.TriggerClick", btnSubmitID);
+    }
+
+    protected void EnableInputCallback()
+    {
+        isDisabled = false;
+    }
+
+    protected void DisabledInputCallback()
+    {
+        isDisabled = true;
+    }
+
+    protected async Task SetActiveCallback(bool active)
+    {   // call context
+        zone.IS_ACTIVE = active;
+        if (Mode == BaseService.ModeUpdate())
+        {
+            var context = BaseService.GetODataContext();
+            context.UpdateZone(zone);
+            await context.SaveChangesAsync();
+        }
+    }
+}
