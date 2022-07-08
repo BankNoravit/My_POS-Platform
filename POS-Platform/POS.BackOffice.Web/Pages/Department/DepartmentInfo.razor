@@ -1,0 +1,198 @@
+﻿@page "/department/info/{Mode}"
+@page "/department/info/{Mode}/{ID}"
+
+@inject IBaseService BaseService
+@inject IJSRuntime JS
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using POS.Domain.Models
+
+<AlertDialog @ref="Alert"
+             OnCloseCallback="@ClosedAlertCallback"></AlertDialog>
+<InfoPage @ref="Page"
+          TemplatePageConfig="templatePageConfig"
+          TriggerSubmitFormCallback="@TriggerSubmitFormCallback"
+          OnEnableInputCallback="@EnableInputCallback"
+          OnDisabledInputCallback="@DisabledInputCallback"
+          OnSetActiveCallback="@SetActiveCallback">
+    <ChildContent>
+        <EditForm Model="department" OnValidSubmit="@OnValidSubmitCallback">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">รหัสแผนก *</label>
+                        <SfTextBox @bind-Value="@department.DEPARTMENT_CODE" CssClass="form-control" Placeholder="รหัสแผนก" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => department.DEPARTMENT_CODE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ชื่อแผนก *</label>
+                        <SfTextBox @bind-Value="@department.DEPARTMENT_NAME_THA" CssClass="form-control" Placeholder="ชื่อแผนก" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => department.DEPARTMENT_NAME_THA)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อแผนก (อังกฤษ)</label>
+                        <SfTextBox @bind-Value="@department.DEPARTMENT_NAME_ENG" CssClass="form-control" Placeholder="ชื่อแผนก (อังกฤษ)" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => department.DEPARTMENT_NAME_ENG)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">สาขา *</label>
+                        <SfDropDownList TValue="Guid?" TItem="ORG_BRANCH" Placeholder="สาขา" @bind-Value="@department.BRANCH_ID" DataSource="@branches" CssClass="form-control" AllowFiltering="true" Enabled="@(!isDisabled)">
+                            <DropDownListFieldSettings Value="@nameof(ORG_BRANCH.BRANCH_ID)" Text="@nameof(ORG_BRANCH.BRANCH_CODE)"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => department.BRANCH_ID)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ประเภทแผนก *</label>
+                        <SfDropDownList TValue="Guid?" TItem="SYS_FLEX_ITEM" Placeholder="ประเภทแผนก" @bind-Value="@department.DEPARTMENT_TYPE_ID" DataSource="@flexitem" CssClass="form-control" AllowFiltering="true" Enabled="@(!isDisabled)">
+                            <DropDownListFieldSettings Value="@nameof(SYS_FLEX_ITEM.FLEX_ITEM_ID)" Text="@nameof(SYS_FLEX_ITEM.FLEX_ITEM_CODE)"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => department.DEPARTMENT_TYPE_ID)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">หมายเหตุ</label>
+                    <SfTextBox @bind-Value="@department.COMMENTS" CssClass="form-control" Placeholder="หมายเหตุ" Multiline="true" Enabled="@(!isDisabled)"></SfTextBox>
+                    <ValidationMessage For="@(() => department.COMMENTS)"></ValidationMessage>
+                </div>
+            </div>
+            <SfButton id="@btnSubmitID" CssClass="d-none"></SfButton>
+        </EditForm>
+    </ChildContent>
+</InfoPage>
+@code {
+    [Parameter] public string Mode { get; set; }
+    [Parameter] public string? ID { get; set; }
+
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private ORG_DEPARTMENT department { get; set; } = new ORG_DEPARTMENT() { ORG_BRANCH = new ORG_BRANCH() };
+    private IEnumerable<ORG_BRANCH> branches { get; set; } = new List<ORG_BRANCH>();
+    private IEnumerable<SYS_FLEX_ITEM> flexitem { get; set; } = new List<SYS_FLEX_ITEM>();
+    private bool isDisabled { get; set; }
+    private string headerText { get; set; }
+    private string btnSubmitID { get; set; }
+    private bool saveSuccess { get; set; }
+
+    InfoPage Page;
+
+    AlertDialog Alert;
+    protected void ClosedAlertCallback()
+    {
+        if (Mode == BaseService.ModeCreate() && saveSuccess == true)
+        {
+            Mode = BaseService.ModeUpdate();
+            ID = department.DEPARTMENT_ID.ToString();
+            templatePageConfig.Mode = Mode;
+            templatePageConfig.HeaderText = string.Format("{0} : {1}", department.DEPARTMENT_CODE, department.DEPARTMENT_NAME_THA);
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        else if (saveSuccess == true)
+        {
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        saveSuccess = false;
+    }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.InitData();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {
+                    { "องค์กร", "/company" },
+                    { "ข้อมูลแผนก", "/department" },
+                    { "รายละเอียด", "/department/info" },
+                },
+                PageTitle = "Department - BackOffice",
+                PageName = "ข้อมูลแผนก",
+                ListPageRoute = "/department",
+                Mode = Mode,
+                HeaderText = headerText,
+                IsActive = department.IS_ACTIVE
+            };
+        btnSubmitID = "btnSubmit";
+    }
+
+    protected void InitData()
+    {
+        var context = BaseService.GetODataContext();
+        if (!string.IsNullOrEmpty(ID) && Mode == BaseService.ModeUpdate())
+        {
+            department = context.Department.Expand(e => e.ORG_BRANCH).Where(f => f.DEPARTMENT_ID == new Guid(ID) && f.IS_DELETE == false).First();
+            headerText = string.Format("{0} : {1}", department.DEPARTMENT_CODE, department.DEPARTMENT_NAME_THA);
+            isDisabled = true;
+        }
+        else
+        {
+            headerText = "เพิ่มข้อมูลแผนก";
+            isDisabled = false;
+        }
+        branches = context.Branch.Where(f => f.IS_DELETE == false).OrderBy(o => o.BRANCH_CODE).ToList();
+        flexitem = context.Flex_Item.Where(f => f.IS_DELETE == false).OrderBy(o => o.FLEX_ITEM_NAME_THA).ToList();
+    }
+    
+    protected async Task OnValidSubmitCallback()
+    {
+        department.IS_ACTIVE = Page.IsActive;
+
+        var context = BaseService.GetODataContext();
+        if (Mode == BaseService.ModeUpdate())
+        {
+            context.UpdateDepartment(department);
+        }
+        else
+        {
+            context.AddToDepartment(department);
+        }
+        var res = await context.SaveChangesAsync();
+        department = BaseService.GetEntityResponse<ORG_DEPARTMENT>(res);
+        saveSuccess = true;
+        Alert.Show(saveSuccess, "บันทึกข้อมูลสำเร็จ");
+    }
+
+    protected async Task TriggerSubmitFormCallback()
+    {
+        await JS.InvokeVoidAsync("button.TriggerClick", btnSubmitID);
+    }
+
+    protected void EnableInputCallback()
+    {
+        isDisabled = false;
+    }
+
+    protected void DisabledInputCallback()
+    {
+        isDisabled = true;
+    }
+
+    protected async Task SetActiveCallback(bool active)
+    {   // call context
+        department.IS_ACTIVE = active;
+        if (Mode == BaseService.ModeUpdate())
+        {
+            var context = BaseService.GetODataContext();
+            context.UpdateDepartment(department);
+            await context.SaveChangesAsync();
+        }
+    }
+}

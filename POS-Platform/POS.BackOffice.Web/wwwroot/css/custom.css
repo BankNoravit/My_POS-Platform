@@ -1,0 +1,17 @@
+/* breadcrumb */
+
+.e-breadcrumb-separator-icon {
+    top: 2px;
+    position: relative;
+}
+
+/* breadcrumb */
+
+/* grid */
+
+.e-toolbar .e-toolbar-items {
+    min-height: 46px;
+    background: white;
+}
+
+/* grid */

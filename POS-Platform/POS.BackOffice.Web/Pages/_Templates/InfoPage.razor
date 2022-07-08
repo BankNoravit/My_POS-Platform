@@ -1,0 +1,228 @@
+﻿@namespace POS.BackOffice.Web.Pages.Templates
+
+@inject NavigationManager NavManager
+@using POS.BackOffice.Web.Services
+@using POS.BackOffice.Web.Pages.Components
+@using Syncfusion.Blazor.Navigations
+
+<PageTitle>@TemplatePageConfig.PageTitle</PageTitle>
+<ConfirmSaveDialog @ref="Dialog"
+                   OnCloseCallback="@ClosedDialogCallback"
+                   OnConfirmCallback="@ConfirmDialogCallback"></ConfirmSaveDialog>
+<!-- BEGIN: Content-->
+<div class="app-content content ">
+    <div class="content-overlay"></div>
+    <div class="header-navbar-shadow"></div>
+    <div class="content-wrapper">
+        <div class="content-header row">
+            <div class="content-header-left col-12">
+                <div class="row breadcrumbs-top">
+                    <div class="col-12">
+                        <h2 class="content-header-title float-start mb-0">@TemplatePageConfig.PageName</h2>
+                        @if (TemplatePageConfig != null && TemplatePageConfig.Breadcrumb.Count > 0)
+                        {
+                            <div class="breadcrumb-wrapper">
+                                <SfBreadcrumb class="breadcrumb">
+                                    <BreadcrumbItems>
+                                        @foreach (var kv in TemplatePageConfig.Breadcrumb)
+                                        {
+                                            <BreadcrumbItem Text="@kv.Key" Url="@kv.Value" />
+                                        }
+                                    </BreadcrumbItems>
+                                    <BreadcrumbTemplates>
+                                        <SeparatorTemplate>
+                                            <span class="e-icons e-chevron-right-small e-breadcrumb-separator-icon"></span>
+                                        </SeparatorTemplate>
+                                    </BreadcrumbTemplates>
+                                </SfBreadcrumb>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="float-start mt-2">
+                            @TemplatePageConfig?.HeaderText
+                            <button type="button"
+                                    class="btn btn-icon btn-icon rounded-circle btn-flat-primary waves-effect">
+                                <i class="fa fa-info-circle fa-sm" aria-hidden="true"></i>
+                            </button>
+                        </h4>
+                    </div>
+                    <div class="col-6 justify-content-end">
+                        <div class="row">
+                            <div class="col-6 justify-content-end">
+                                <h4 class="float-start mt-2">สถานะ</h4>
+                            </div>
+                            <div class="col-6 justify-content-end">
+                                <div class="float-start mt-2 form-check form-check-primary form-switch">
+                                    <input type="checkbox" class="form-check-input" @onchange="@OnSetActiveChange" checked="@TemplatePageConfig?.IsActive">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="py-2">
+                        <div class="border-end d-inline-flex pe-50">
+                            <button type="button" class="btn btn-flat-primary me-25 d-flex align-items-center" @onclick="@OnBtnSaveAction">
+                                <i class="fas fa-edit me-25"></i>
+                                <span>@btnSaveText</span>
+                            </button>
+                            <button type="button" class="btn btn-flat-primary d-flex align-items-center" @onclick="@OnRedirectToListPage">
+                                <i class="fa fa-window-close me-25"></i>
+                                <span>ปิด</span>
+                            </button>
+                        </div>
+                        @*                        <div class="d-inline-flex pe-50">
+                            <a class="btn btn-flat-primary d-flex align-items-center" href="#">
+                            <i class="fa fa-print me-25"></i>
+                            <span>พิมพ์</span>
+                            </a>
+                            </div>*@
+                    </div>
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="general-tab" data-bs-toggle="pill" href="#general"
+                               aria-expanded="true"><i class="fa fa-info-circle fa-sm" aria-hidden="true"></i> ทั่วไป</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="attachment-tab" data-bs-toggle="pill" href="#attachment"
+                               aria-expanded="false"><i class="fa fa-file-text-o fa-sm" aria-hidden="true"></i> เอกสารแนบ</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="general" role="tabpanel" aria-labelledby="general-tab"
+                             aria-expanded="true">
+                            <div class="accordion accordion-margin" id="accordionMargin" data-toggle-hover="true">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingMarginOne">
+                                        <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#accordionMarginOne"
+                                                aria-expanded="false" aria-controls="accordionMarginOne">
+                                            ทั่วไป
+                                        </button>
+                                    </h2>
+                                    <div id="accordionMarginOne" class="accordion-collapse collapse show"
+                                         aria-labelledby="headingMarginOne" data-bs-parent="#accordionMargin">
+                                        <div class="accordion-body">
+                                            @ChildContent
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="attachment" role="tabpanel" aria-labelledby="attachment-tab"
+                             aria-expanded="false">
+                            ทดสอบเอกสารแนบ
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Content-->
+@code
+{
+    [Parameter] public TemplatePageConfig TemplatePageConfig { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    [Parameter] public EventCallback TriggerSubmitFormCallback { get; set; }
+    [Parameter] public EventCallback OnEnableInputCallback { get; set; }
+    [Parameter] public EventCallback OnDisabledInputCallback { get; set; }
+    [Parameter] public EventCallback<bool> OnSetActiveCallback { get; set; }
+
+    public bool IsActive { get; set; }
+
+    private string btnSaveText { get; set; }
+    private bool isEditMode { get; set; }
+
+    ConfirmSaveDialog Dialog;
+    public bool showedDialog = false;
+    protected void ClosedDialogCallback()
+    {
+        showedDialog = false;
+    }
+
+    protected async Task ConfirmDialogCallback()
+    {
+        await TriggerSubmitFormCallback.InvokeAsync();
+        Dialog.Hide();
+        isEditMode = false; // View mode
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.setButtons();
+    }
+
+    protected void setButtons()
+    {
+        if (TemplatePageConfig.Mode == BaseService.ModeUpdate())
+        {
+            btnSaveText = "แก้ไข";
+            isEditMode = false; // View mode
+        }
+        else
+        {
+            btnSaveText = "บันทึก";
+            isEditMode = true;  // Edit mode
+            TemplatePageConfig.IsActive = true;
+            IsActive = TemplatePageConfig.IsActive;
+        }
+    }
+
+    protected async Task OnBtnSaveAction()
+    {
+        if (isEditMode)
+        {
+            await OnSaveData();
+        }
+        else
+        {
+            btnSaveText = "บันทึก";
+            isEditMode = true; // Edit mode
+            await OnBeginEditMode();
+        }
+    }
+
+    protected async Task OnBeginEditMode()
+    {
+        await OnEnableInputCallback.InvokeAsync();
+    }
+
+    protected async Task OnSaveData()
+    {
+        if (!showedDialog)
+        {
+            Dialog.Show();
+            showedDialog = true;
+        }
+        await Task.FromResult(0);
+    }
+
+    protected async void OnSetActiveChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        TemplatePageConfig.IsActive = (bool)args.Value;
+        IsActive = TemplatePageConfig.IsActive;
+        await OnSetActiveCallback.InvokeAsync(TemplatePageConfig.IsActive);
+    }
+
+    protected void OnRedirectToListPage()
+    {
+        NavManager.NavigateTo(TemplatePageConfig.ListPageRoute, false);
+    }
+
+    public void Refresh()
+    {
+        StateHasChanged();
+        this.setButtons();
+    }
+}

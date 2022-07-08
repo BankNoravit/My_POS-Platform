@@ -1,0 +1,161 @@
+﻿@namespace POS.BackOffice.Web.Pages.Components
+
+@inject IBaseService BaseService
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.QueryBuilder
+@using POS.BackOffice.Web.Services
+
+@typeparam TValue
+
+<div class="offcanvas offcanvas-end shadow-lg" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+     id="dataFilter" aria-labelledby="offcanvasScrollLabel">
+    <div class="offcanvas-header border-bottom py-2">
+        <h5 id="offcanvasScrollLabel" class="offcanvas-title">
+            <i class="fa fa-filter me-50"></i>
+            กรองข้อมูล
+        </h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close">
+        </button>
+    </div>
+
+    <div class="offcanvas-body pt-1 pb-3 mx-0 flex-grow-0 vh-100 bg-white">
+        <SfQueryBuilder @ref="Querybuilder" TValue="TValue">
+            <SfDataManager Url="@BaseService.GetOdataRequestUrl(ODATA_ROUTE_NAME.Position)" Adaptor="Adaptors.ODataV4Adaptor"></SfDataManager> 
+            @*
+                <QueryBuilderRule Condition="and" Rules="Rules"></QueryBuilderRule>*@
+            <QueryBuilderEvents TValue="TValue" RuleChanged="OnUpdateFilterRuleCallback"></QueryBuilderEvents>
+            <QueryBuilderColumns>
+                @foreach (var col in DataFilterColumns.OrderBy(o => o.Seq))
+                {
+                    <QueryBuilderColumn Field="@col.Field" Label="@col.Label" Type="@col.Type" Format="@col.Format" Operators="@col.Operators"></QueryBuilderColumn>
+                }
+            </QueryBuilderColumns>
+        </SfQueryBuilder>
+        <hr class="mt-4 mb-1">
+        <div class="row g-1">
+            <div class="col">
+                <button type="button" class="btn btn-flat-primary w-100" data-bs-dismiss="offcanvas" @onclick="@OnApplyFilterCallback">
+                    <i class="fa fa-check me-50"></i>ตกลง
+                </button>
+            </div>
+            <div class="col">
+                <button type="button" class="btn btn-flat-secondary w-100" data-bs-dismiss="offcanvas">
+                    <i class="fa fa-times me-50"></i>ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code
+{
+    [Parameter] public List<DataFilterColumn> DataFilterColumns { get; set; }
+    [Parameter] public List<RuleModel> Rules { get; set; }
+
+    [Parameter] public EventCallback<RuleChangeEventArgs> OnUpdateFilterRuleCallback { get; set; }
+    [Parameter] public EventCallback OnApplyFilterCallback { get; set; }
+
+    private SfQueryBuilder<TValue> Querybuilder { get; set; }
+
+    //Rules
+    //{
+    //    new RuleModel { Field="HireDate", Label="HireDate", Type="Date", Operator="equal", Value = new DateTime(DateTime.Now.Year,DateTime.Now.Month,4) },
+    //    new RuleModel { Field="Salary", Label="Salary",  Type="Number", Operator="greaterthan", Value = 23 }
+    //};
+
+    public WhereFilter GetPredicate()
+    {
+        return Querybuilder.GetPredicate();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        foreach (var col in DataFilterColumns)
+        {
+            if (col.Operators == null)
+            {
+                switch (col.Type)
+                {
+                    case ColumnType.String:
+                        col.Operators = this.GetStringOperators();
+                        break;
+                    case ColumnType.Date:
+                        col.Operators = this.GetDateOperators();
+                        break;
+                    case ColumnType.Number:
+                        col.Operators = this.GetNumberOperators();
+                        break;
+                    case ColumnType.Boolean:
+                        col.Operators = this.GetBooleanOperators();
+                        break;
+                }
+            }
+        }
+    }
+
+    public List<OperatorsModel> GetStringOperators()
+    {
+        var result = new List<OperatorsModel>()
+        {
+            new OperatorsModel() { Text="ขึ้นต้นด้วย", Value=QUERY_OPERATORS.STARTSWITH.ToString().ToLower() },
+            new OperatorsModel() { Text="ลงท้ายด้วย", Value=QUERY_OPERATORS.ENDSWITH.ToString().ToLower() },
+            new OperatorsModel() { Text="ประกอบด้วย", Value=QUERY_OPERATORS.CONTAINS.ToString().ToLower() },
+            new OperatorsModel() { Text="เท่ากับ", Value=QUERY_OPERATORS.EQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่เท่ากับ", Value=QUERY_OPERATORS.NOTEQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ภายใน", Value=QUERY_OPERATORS.IN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่ใช่ภายใน", Value=QUERY_OPERATORS.NOTIN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่มีข้อมูล", Value=QUERY_OPERATORS.ISNULL.ToString().ToLower() },
+            new OperatorsModel() { Text="มีข้อมูล", Value=QUERY_OPERATORS.ISNOTNULL.ToString().ToLower() }
+        };
+        return result;
+    }
+
+    public List<OperatorsModel> GetDateOperators()
+    {
+        var result = new List<OperatorsModel>()
+        {
+            new OperatorsModel() { Text="เท่ากับ", Value=QUERY_OPERATORS.EQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่เท่ากับ", Value=QUERY_OPERATORS.NOTEQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="มากกว่า", Value=QUERY_OPERATORS.GREATERTHAN.ToString().ToLower() },
+            new OperatorsModel() { Text="มากกว่าหรือเท่ากับ", Value=QUERY_OPERATORS.GREATERTHANOREQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="น้อยกว่า", Value=QUERY_OPERATORS.LESSTHAN.ToString().ToLower() },
+            new OperatorsModel() { Text="น้อยกว่าหรือเท่ากับ", Value=QUERY_OPERATORS.LESSTHANOREQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ระหว่างวันที่", Value=QUERY_OPERATORS.BETWEEN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่ใช่ระหว่างวันที่", Value=QUERY_OPERATORS.NOTBETWEEN.ToString().ToLower() }
+        };
+        return result;
+    }
+
+    public List<OperatorsModel> GetNumberOperators()
+    {
+        var result = new List<OperatorsModel>()
+        {
+            new OperatorsModel() { Text="เท่ากับ", Value=QUERY_OPERATORS.EQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่เท่ากับ", Value=QUERY_OPERATORS.NOTEQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="มากกว่า", Value=QUERY_OPERATORS.GREATERTHAN.ToString().ToLower() },
+            new OperatorsModel() { Text="มากกว่าหรือเท่ากับ", Value=QUERY_OPERATORS.GREATERTHANOREQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="น้อยกว่า", Value=QUERY_OPERATORS.LESSTHAN.ToString().ToLower() },
+            new OperatorsModel() { Text="น้อยกว่าหรือเท่ากับ", Value=QUERY_OPERATORS.LESSTHANOREQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ระหว่างวันที่", Value=QUERY_OPERATORS.BETWEEN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่ใช่ระหว่างวันที่", Value=QUERY_OPERATORS.NOTBETWEEN.ToString().ToLower() },
+            new OperatorsModel() { Text="ภายใน", Value=QUERY_OPERATORS.IN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่ใช่ภายใน", Value=QUERY_OPERATORS.NOTIN.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่มีข้อมูล", Value=QUERY_OPERATORS.ISNULL.ToString().ToLower() },
+            new OperatorsModel() { Text="มีข้อมูล", Value=QUERY_OPERATORS.ISNOTNULL.ToString().ToLower() }
+        };
+        return result;
+    }
+
+    public List<OperatorsModel> GetBooleanOperators()
+    {
+        var result = new List<OperatorsModel>()
+        {
+            new OperatorsModel() { Text="เท่ากับ", Value=QUERY_OPERATORS.EQUAL.ToString().ToLower() },
+            new OperatorsModel() { Text="ไม่เท่ากับ", Value=QUERY_OPERATORS.NOTEQUAL.ToString().ToLower() }
+        };
+        return result;
+    }
+}

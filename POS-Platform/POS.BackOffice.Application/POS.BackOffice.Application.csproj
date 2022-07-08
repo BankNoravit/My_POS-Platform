@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="v1\MDProduct\**" />
+    <Compile Remove="v1\Product\**" />
+    <Compile Remove="v1\SaleOrder\**" />
+    <EmbeddedResource Remove="v1\MDProduct\**" />
+    <EmbeddedResource Remove="v1\Product\**" />
+    <EmbeddedResource Remove="v1\SaleOrder\**" />
+    <None Remove="v1\MDProduct\**" />
+    <None Remove="v1\Product\**" />
+    <None Remove="v1\SaleOrder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\POS.Common\POS.Common.csproj" />
+    <ProjectReference Include="..\POS.Domain\POS.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="v1\Flex_Item\Command\" />
+    <Folder Include="v1\Flex_Item\ViewModels\" />
+    <Folder Include="v1\Flex_Item\Profile\" />
+    <Folder Include="v3\" />
+    <Folder Include="v2\" />
+  </ItemGroup>
+
+</Project>

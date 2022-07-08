@@ -1,0 +1,256 @@
+﻿@page "/company/info/{Mode}"
+@page "/company/info/{Mode}/{ID}"
+
+@inject IBaseService BaseService
+@inject IJSRuntime JS
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using POS.Domain.Models
+
+<AlertDialog @ref="Alert"
+             OnCloseCallback="@ClosedAlertCallback"></AlertDialog>
+<InfoPage @ref="Page"
+          TemplatePageConfig="templatePageConfig"
+          TriggerSubmitFormCallback="@TriggerSubmitFormCallback"
+          OnEnableInputCallback="@EnableInputCallback"
+          OnDisabledInputCallback="@DisabledInputCallback"
+          OnSetActiveCallback="@SetActiveCallback">
+    <ChildContent>
+        <EditForm Model="company" OnValidSubmit="@OnValidSubmitCallback">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">รหัสองค์กร *</label>
+                        <SfTextBox @bind-Value="@company.COMPANY_CODE" CssClass="form-control" Placeholder="รหัสองค์กร" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.COMPANY_CODE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ชื่อองค์กร *</label>
+                        <SfTextBox @bind-Value="@company.COMPANY_NAME_THA" CssClass="form-control" Placeholder="ชื่อองค์กร" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.COMPANY_NAME_THA)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อองค์กร (อังกฤษ)</label>
+                        <SfTextBox @bind-Value="@company.COMPANY_NAME_ENG" CssClass="form-control" Placeholder="ชื่อองค์กร (อังกฤษ)" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.COMPANY_NAME_ENG)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">เลขประจำตัวผู้เสียภาษี</label>
+                        <SfTextBox @bind-Value="@company.TAX_NO" CssClass="form-control" Placeholder="เลขประจำตัวผู้เสียภาษี" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.TAX_NO)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">หมายเลขโทรศัพท์</label>
+                        <SfTextBox @bind-Value="@company.PHONE" CssClass="form-control" Placeholder="หมายเลขโทรศัพท์" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.PHONE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">แฟกซ์</label>
+                        <SfTextBox @bind-Value="@company.FAX" CssClass="form-control" Placeholder="แฟกซ์" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.FAX)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">อีเมลล์</label>
+                        <SfTextBox @bind-Value="@company.EMAIL" CssClass="form-control" Placeholder="อีเมลล์" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.EMAIL)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ไอดีไลน์</label>
+                        <SfTextBox @bind-Value="@company.LINE_OFFICIAL_ID" CssClass="form-control" Placeholder="ไอดีไลน์" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.LINE_OFFICIAL_ID)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">เฟซบุ๊ค</label>
+                        <SfTextBox @bind-Value="@company.FACEBOOK_ID" CssClass="form-control" Placeholder="เฟซบุ๊ค" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.FACEBOOK_ID)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">เว็ปไซต์</label>
+                        <SfTextBox @bind-Value="@company.WEBSITE" CssClass="form-control" Placeholder="เว็ปไซต์" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.WEBSITE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">โลโก้</label>
+                        <SfTextBox @bind-Value="@company.LOGO_URL" CssClass="form-control" Placeholder="โลโก้" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => company.LOGO_URL)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">หมายเหตุ</label>
+                    <SfTextBox @bind-Value="@company.COMMENTS" CssClass="form-control" Placeholder="หมายเหตุ" Multiline="true" Enabled="@(!isDisabled)"></SfTextBox>
+                    <ValidationMessage For="@(() => company.COMMENTS)"></ValidationMessage>
+                </div>
+            </div>
+            <SfButton id="@btnSubmitID" CssClass="d-none"></SfButton>
+        </EditForm>
+    </ChildContent>
+</InfoPage>
+@code {
+    [Parameter] public string Mode { get; set; }
+    [Parameter] public string? ID { get; set; }
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private ORG_COMPANY company { get; set; } = new ORG_COMPANY(); //{ ORG_COMPANY_LEVEL = new ORG_COMPANY_LEVEL() };
+    private bool isDisabled { get; set; }
+    private string headerText { get; set; }
+    private string btnSubmitID { get; set; }
+    private bool saveSuccess { get; set; }
+
+    InfoPage Page;
+
+    AlertDialog Alert;
+    protected void ClosedAlertCallback()
+    {
+        if (Mode == BaseService.ModeCreate() && saveSuccess == true)
+        {
+            Mode = BaseService.ModeUpdate();
+            ID = company.COMPANY_ID.ToString();
+            templatePageConfig.Mode = Mode;
+            templatePageConfig.HeaderText = string.Format("{0} : {1}", company.COMPANY_CODE, company.COMPANY_NAME_THA);
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        else if (saveSuccess == true)
+        {
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        saveSuccess = false;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.InitData();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {
+                    { "บริษัท", "/company" },
+                    { "ข้อมูลบริษัท", "/company" },
+                    { "รายละเอียด", "/company/info" },
+                },
+                PageTitle = "Company - BackOffice",
+                PageName = "ข้อมูลบริษัท",
+                ListPageRoute = "/company",
+                Mode = Mode,
+                HeaderText = headerText,
+                IsActive = company.IS_ACTIVE
+            };
+        btnSubmitID = "btnSubmit";
+    }
+
+    protected void InitData()
+    {
+        var context = BaseService.GetODataContext();
+        if (!string.IsNullOrEmpty(ID) && Mode == BaseService.ModeUpdate())
+        {
+            company = context.Company.Where(f => f.COMPANY_ID == new Guid(ID) && f.IS_DELETE == false).First();
+            headerText = string.Format("{0} : {1}", company.COMPANY_CODE, company.COMPANY_NAME_THA);
+            isDisabled = true;
+        }
+        else
+        {
+            headerText = "เพิ่มข้อมูลบริษัท";
+            isDisabled = false;
+        }
+        //  companyLevels = context.CompanyLevel.Where(f => f.IS_DELETE == false).OrderBy(o => o.COMPANY_LEVEL_CODE).ToList();
+    }
+
+    protected async Task OnValidSubmitCallback()
+    {
+        company.IS_ACTIVE = Page.IsActive;
+
+        var context = BaseService.GetODataContext();
+        if (Mode == BaseService.ModeUpdate())
+        {
+            context.UpdateCompany(company);
+        }
+        else
+        {
+            context.AddToCompany(company);
+        }
+
+        try
+        {
+            var res = await context.SaveChangesAsync();
+            company = BaseService.GetEntityResponse<ORG_COMPANY>(res);
+            saveSuccess = true;
+            Alert.Show(saveSuccess, "บันทึกข้อมูลสำเร็จ");
+        }
+        catch (Exception ex)
+        {
+            Alert.Show(true, ex.ToString());
+        }
+    }
+
+    protected async Task TriggerSubmitFormCallback()
+    {
+        await JS.InvokeVoidAsync("button.TriggerClick", btnSubmitID);
+    }
+
+    protected void EnableInputCallback()
+    {
+        isDisabled = false;
+    }
+
+    protected void DisabledInputCallback()
+    {
+        isDisabled = true;
+    }
+
+    protected async Task SetActiveCallback(bool active)
+    {   // call context
+        company.IS_ACTIVE = active;
+        if (Mode == BaseService.ModeUpdate())
+        {
+            var context = BaseService.GetODataContext();
+            context.UpdateCompany(company);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    /* private void OnCompanyLevelChange(ChangeEventArgs<Guid, ORG_COMPANY_LEVEL> args)
+         {
+         if (args.ItemData != null)
+             {
+             company.ORG_COMPANY_LEVEL.COMPANY_LEVEL_NAME_THA = args.ItemData.COMPANY_LEVEL_NAME_THA;
+         }
+         else
+             {
+             company.ORG_COMPANY_LEVEL.COMPANY_LEVEL_NAME_THA = string.Empty;
+             }
+    }*/
+}

@@ -1,0 +1,151 @@
+/*================================================================================
+	Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+	Version: 2.0
+	Author: PIXINVENT
+	Author URL: http://www.themeforest.net/user/pixinvent
+================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+
+:root {
+  --bs-font-sans-serif: 'Bai Jamjuree', sans-serif;
+  --bs-font-monospace: 'Bai Jamjuree', sans-serif;
+  --bs-body-font-family: var(--bs-font-sans-serif);
+}
+
+.navigation {
+  font-family: var(--bs-font-sans-serif);
+}
+
+.btn-sm,
+.btn-group-sm>.btn {
+  padding: 0.486rem 0.6rem;
+  font-size: 0.9rem;
+  border-radius: 0.358rem;
+}
+
+.dropdown-toggle::after {
+  left: 0.3rem;
+}
+
+.navigation {
+  font-size: 1.05rem;
+}
+
+.table>thead,
+.table>tbody {
+  white-space: nowrap;
+}
+
+/* Customize Panel Layer 2 */
+.submenu-content.submenu-content-start,
+.submenu-content.submenu-content-end {
+  position: fixed;
+  width: 450px;
+  height: 100vh;
+  bottom: 0;
+}
+
+.submenu-content.submenu-content-start {
+  right: 0;
+  z-index: 1033;
+}
+
+.submenu-content.submenu-content-end {
+  left: 0;
+  z-index: 1033;
+}
+
+.submenu-content {
+  background: #fff;
+  border-left: 1px solid rgba(34, 41, 47, 0.125);
+  border-right: 1px solid rgba(34, 41, 47, 0.125);
+}
+
+.show-panel {
+  visibility: visible;
+  opacity: 1;
+}
+
+.show-panel.panel-start {
+  margin-right: 450px;
+}
+
+.show-panel.panel-end {
+  margin-left: 260px;
+}
+
+.hide-panel {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.show-panel,
+.hide-panel {
+  transition: all ease-in-out 0.3s;
+}
+
+.close-panel {
+  visibility: hidden;
+}
+
+.card-submenu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1.4rem;
+}
+
+.card-submenu-header .btn-close {
+  padding: 0.4rem 0.7rem;
+  margin-top: -0.4rem;
+  margin-right: -0.7rem;
+  margin-bottom: -0.4rem;
+}
+
+.card-submenu-title {
+  margin-bottom: 0;
+  line-height: 1.45;
+}
+
+.card-submenu-body {
+  padding: 0.8rem 1.4rem;
+  overflow-y: scroll;
+}
+
+/* #Customize Panel Layer 2 */
+
+.shadow-lg.shadow-start {
+  box-shadow: -1rem 0 1rem rgb(34 41 47 / 18%) !important;
+}
+
+.shadow-lg.shadow-end {
+  box-shadow: 1rem 0 1rem rgb(34 41 47 / 18%) !important;
+}
+
+.btn-text-left {
+  text-align: left;
+}
+
+.offcanvas-end{
+  width: 450px;
+}
+
+.card-header{
+  padding: 0.9rem;
+}
+
+.card-body {
+  padding: 0.9rem;
+}
+
+.mb-1{
+  margin-bottom: 0.5rem !important
+}
+
+.justify-content-end{
+  display: flex;
+}

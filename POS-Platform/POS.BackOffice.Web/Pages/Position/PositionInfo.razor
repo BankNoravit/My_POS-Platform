@@ -1,0 +1,207 @@
+﻿@page "/position/info/{Mode}"
+@page "/position/info/{Mode}/{ID}"
+
+@inject IBaseService BaseService
+@inject IJSRuntime JS
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using POS.BackOffice.Web.Pages.Components
+@using POS.BackOffice.Web.Pages.Templates
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using POS.Domain.Models
+
+<AlertDialog @ref="Alert"
+             OnCloseCallback="@ClosedAlertCallback"></AlertDialog>
+<InfoPage @ref="Page"
+          TemplatePageConfig="templatePageConfig"
+          TriggerSubmitFormCallback="@TriggerSubmitFormCallback"
+          OnEnableInputCallback="@EnableInputCallback"
+          OnDisabledInputCallback="@DisabledInputCallback"
+          OnSetActiveCallback="@SetActiveCallback">
+    <ChildContent>
+        <EditForm Model="position" OnValidSubmit="@OnValidSubmitCallback">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">รหัสตำแหน่ง *</label>
+                        <SfTextBox @bind-Value="@position.POSITION_CODE" CssClass="form-control" Placeholder="รหัสตำแหน่ง" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => position.POSITION_CODE)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">ชื่อตำแหน่ง *</label>
+                        <SfTextBox @bind-Value="@position.POSITION_NAME_THA" CssClass="form-control" Placeholder="ชื่อตำแหน่ง" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => position.POSITION_NAME_THA)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อตำแหน่ง (อังกฤษ)</label>
+                        <SfTextBox @bind-Value="@position.POSITION_NAME_ENG" CssClass="form-control" Placeholder="ชื่อตำแหน่ง (อังกฤษ)" Enabled="@(!isDisabled)"></SfTextBox>
+                        <ValidationMessage For="@(() => position.POSITION_NAME_ENG)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label text-danger">รหัสระดับตำแหน่ง *</label>
+                        <SfDropDownList TValue="Guid" TItem="ORG_POSITION_LEVEL" Placeholder="รหัสระดับตำแหน่ง" @bind-Value="@position.POSITION_LEVEL_ID" DataSource="@positionLevels" CssClass="form-control" AllowFiltering="true" Enabled="@(!isDisabled)">
+                            <DropDownListEvents TValue="Guid" TItem="ORG_POSITION_LEVEL" ValueChange="@OnPositionLevelChange"></DropDownListEvents>
+                            <DropDownListFieldSettings Value="@nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_ID)" Text="@nameof(ORG_POSITION_LEVEL.POSITION_LEVEL_CODE)"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => position.POSITION_LEVEL_ID)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <div class="mb-1">
+                        <label class="form-label">ชื่อระดับตำแหน่ง</label>
+                        <SfTextBox @bind-Value="@position.ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_THA" CssClass="form-control" Placeholder="ชื่อระดับตำแหน่ง" Enabled="false"></SfTextBox>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">หมายเหตุ</label>
+                    <SfTextBox @bind-Value="@position.COMMENTS" CssClass="form-control" Placeholder="หมายเหตุ" Multiline="true" Enabled="@(!isDisabled)"></SfTextBox>
+                    <ValidationMessage For="@(() => position.COMMENTS)"></ValidationMessage>
+                </div>
+            </div>
+            <SfButton id="@btnSubmitID" CssClass="d-none"></SfButton>
+        </EditForm>
+    </ChildContent>
+</InfoPage>
+@code {
+    [Parameter] public string Mode { get; set; }
+    [Parameter] public string? ID { get; set; }
+
+    private TemplatePageConfig templatePageConfig { get; set; }
+    private ORG_POSITION position { get; set; } = new ORG_POSITION() { ORG_POSITION_LEVEL = new ORG_POSITION_LEVEL() };
+    private IEnumerable<ORG_POSITION_LEVEL> positionLevels { get; set; } = new List<ORG_POSITION_LEVEL>();
+    private bool isDisabled { get; set; }
+    private string headerText { get; set; }
+    private string btnSubmitID { get; set; }
+    private bool saveSuccess { get; set; }
+
+    InfoPage Page;
+
+    AlertDialog Alert;
+    protected void ClosedAlertCallback()
+    {
+        if (Mode == BaseService.ModeCreate() && saveSuccess == true)
+        {
+            Mode = BaseService.ModeUpdate();
+            ID = position.POSITION_ID.ToString();
+            templatePageConfig.Mode = Mode;
+            templatePageConfig.HeaderText = string.Format("{0} : {1}", position.POSITION_CODE, position.POSITION_NAME_THA);
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        else if (saveSuccess == true)
+        {
+            Page.Refresh();
+            this.DisabledInputCallback();
+        }
+        saveSuccess = false;
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.InitData();
+        templatePageConfig = new TemplatePageConfig()
+            {
+                Breadcrumb = new Dictionary<string, string>()
+                {
+                    { "องค์กร", "/company" },
+                    { "ข้อมูลตำแหน่ง", "/position" },
+                    { "รายละเอียด", "/position/info" },
+                },
+                PageTitle = "Position - BackOffice",
+                PageName = "ข้อมูลตำแหน่ง",
+                ListPageRoute = "/position",
+                Mode = Mode,
+                HeaderText = headerText,
+                IsActive = position.IS_ACTIVE
+            };
+        btnSubmitID = "btnSubmit";
+    }
+
+    protected void InitData()
+    {
+        var context = BaseService.GetODataContext();
+        if (!string.IsNullOrEmpty(ID) && Mode == BaseService.ModeUpdate())
+        {
+            position = context.Position.Expand(e => e.ORG_POSITION_LEVEL).Where(f => f.POSITION_ID == new Guid(ID) && f.IS_DELETE == false).First();
+            headerText = string.Format("{0} : {1}", position.POSITION_CODE, position.POSITION_NAME_THA);
+            isDisabled = true;
+        }
+        else
+        {
+            headerText = "เพิ่มข้อมูลตำแหน่ง";
+            isDisabled = false;
+        }
+        positionLevels = context.PositionLevel.Where(f => f.IS_DELETE == false).OrderBy(o => o.POSITION_LEVEL_CODE).ToList();
+    }
+
+    protected async Task OnValidSubmitCallback()
+    {
+        position.IS_ACTIVE = Page.IsActive;
+
+        var context = BaseService.GetODataContext();
+        if (Mode == BaseService.ModeUpdate())
+        {
+            context.UpdatePosition(position);
+        }
+        else
+        {
+            context.AddToPosition(position);
+        }
+        var res = await context.SaveChangesAsync();
+        position = BaseService.GetEntityResponse<ORG_POSITION>(res);
+        saveSuccess = true;
+        Alert.Show(saveSuccess, "บันทึกข้อมูลสำเร็จ");
+    }
+
+    protected async Task TriggerSubmitFormCallback()
+    {
+        await JS.InvokeVoidAsync("button.TriggerClick", btnSubmitID);
+    }
+
+    protected void EnableInputCallback()
+    {
+        isDisabled = false;
+    }
+
+    protected void DisabledInputCallback()
+    {
+        isDisabled = true;
+    }
+
+    protected async Task SetActiveCallback(bool active)
+    {   // call context
+        position.IS_ACTIVE = active;
+        if (Mode == BaseService.ModeUpdate())
+        {
+            var context = BaseService.GetODataContext();
+            context.UpdatePosition(position);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private void OnPositionLevelChange(ChangeEventArgs<Guid, ORG_POSITION_LEVEL> args)
+    {
+        if (args.ItemData != null)
+        {
+            position.ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_THA = args.ItemData.POSITION_LEVEL_NAME_THA;
+        }
+        else
+        {
+            position.ORG_POSITION_LEVEL.POSITION_LEVEL_NAME_THA = string.Empty;
+        }
+    }
+}

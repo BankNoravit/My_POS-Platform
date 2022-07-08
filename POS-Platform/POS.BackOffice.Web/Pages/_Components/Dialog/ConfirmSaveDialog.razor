@@ -1,0 +1,31 @@
+﻿@namespace POS.BackOffice.Web.Pages.Components
+
+<ConfirmDialog @ref="Dialog"
+               HeaderText="ยืนยันการบันทึกข้อมูล"
+               ContentText="กดปุ่มยืนยันอีกครั้ง เพื่อยืนยันการบันทึกข้อมูลนี้"
+               OnCloseCallback="@OnCloseCallback"
+               OnConfirmCallback="@OnConfirmCallback"></ConfirmDialog>
+<style>
+    .e-dlg-modal .e-btn.e-primary {
+        background-color: #7367f0 !important;
+        border-color: #7367f0 !important;
+        color: #fff !important;
+    }
+</style>
+@code
+{
+    [Parameter] public EventCallback OnCloseCallback { get; set; }
+    [Parameter] public EventCallback OnConfirmCallback { get; set; }
+
+    ConfirmDialog Dialog;
+
+    public void Show()
+    {
+        Dialog.Show();
+    }
+
+    public void Hide()
+    {
+        Dialog.Hide();
+    }
+}

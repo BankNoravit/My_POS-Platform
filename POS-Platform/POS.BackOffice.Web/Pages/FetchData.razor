@@ -1,0 +1,74 @@
+﻿@page "/fetchdata"
+
+<PageTitle>Test API - BackOffice</PageTitle>
+
+@using Syncfusion.Blazor.QueryBuilder
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor
+@using Newtonsoft.Json.Linq;
+@using ColumnType = Syncfusion.Blazor.QueryBuilder.ColumnType
+
+<div class="col-lg-12 control-section">
+    <SfQueryBuilder @ref="Querybuilder" TValue="Order">
+
+        <SfDataManager Url="https://services.odata.org/V4/Northwind/Northwind.svc/Orders/" Adaptor="Adaptors.ODataV4Adaptor"></SfDataManager>
+        <QueryBuilderEvents TValue="Order" RuleChanged="UpdateRule"></QueryBuilderEvents>
+        <QueryBuilderColumns>
+            <QueryBuilderColumn Field="OrderID" Label="Order ID" Type="ColumnType.Number"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="CustomerID" Label="Customer Name" Type="ColumnType.String"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="ShipCity" Label="Ship City" Type="ColumnType.String"></QueryBuilderColumn>
+            <QueryBuilderColumn Field="ShipCountry" Label="Ship Country" Type="ColumnType.String"></QueryBuilderColumn>
+        </QueryBuilderColumns>
+    </SfQueryBuilder>
+</div>
+<div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <div class="row">
+            <SfGrid TValue="Order" AllowPaging="true" Query="@GridQueryData">
+                <SfDataManager Url="https://services.odata.org/V4/Northwind/Northwind.svc/Orders/" Adaptor="Adaptors.ODataV4Adaptor"></SfDataManager>
+                <GridColumns>
+                    <GridColumn Field=@nameof(Order.OrderID) HeaderText="Order ID" IsPrimaryKey="true" TextAlign="TextAlign.Right" Width="120"></GridColumn>
+                    <GridColumn Field=@nameof(Order.CustomerID) HeaderText="Customer Name" Width="150"></GridColumn>
+                    <GridColumn Field=@nameof(Order.ShipCity) HeaderText=" Ship City" Width="130"></GridColumn>
+                    <GridColumn Field=@nameof(Order.ShipCountry) HeaderText="Ship Country" Width="120"></GridColumn>
+                </GridColumns>
+                <GridEvents Created="Created" TValue="Order"></GridEvents>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+@code {
+
+    SfQueryBuilder<Order> Querybuilder;
+    private Query GridQueryData = new Query().Where("CustomerID", "equal", "VINET");
+    public List<RuleModel> ImportRules = new List<RuleModel>
+    {
+        new RuleModel { Field = "CustomerID", Label="Customer Name", Value = "VINET", Operator = "equal", Type = "String"}
+    };
+
+    private void Created()
+    {
+        Querybuilder.SetRules(ImportRules, "and");
+    }
+    private void UpdateRule(RuleChangeEventArgs args)
+    {
+        var predicate = Querybuilder.GetPredicate();
+        if (predicate != null)
+        {
+            GridQueryData = new Query().Where(predicate);
+        }
+        else
+        {
+            GridQueryData = new Query();
+        }
+    }
+
+    public class Order
+    {
+        public int? OrderID { get; set; }
+        public string CustomerID { get; set; }
+        public string ShipCity { get; set; }
+        public string ShipCountry { get; set; }
+    }
+}
